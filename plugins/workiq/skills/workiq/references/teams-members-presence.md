@@ -42,9 +42,8 @@ membership, team tags, and presence.
 - `setUserPreferredPresence` is the route for user requests. `setPresence` is
   the application-session variant and requires a `sessionId`; use it only if
   you have one, and do not cycle between presence endpoints.
-- Preferred presence only shows while the user has an active Teams session; a
-  read that still says `Offline` after a successful set is expected. Report the
-  successful set and its expiry rather than claiming failure.
+- Preferred presence only shows while the user has an active Teams session
+  (per Graph docs), so an `Offline` read after a successful set is expected.
 - "Reset my status" or "back to automatic" means
   `clearUserPreferredPresence`; never set `Available` instead.
 - Status message body:

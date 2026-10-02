@@ -100,7 +100,7 @@ tabs, or files) act only on the exact resolved ID; never on a similar name.
 | `.../pinnedMessages/{id}`, `.../tabs/{id}` | That entry's `id` | Its collection |
 | `teamworkUserIdentity.tenantId` | The same member's `tenantId` | The member entry |
 
-Never use a membership `id` (often beginning with `MCMj`) as a user ID; Graph
+Never use a membership `id` as a user ID; Graph
 can treat it as another user and return HTTP 403. `userId` and `tenantId` are
 returned on member entries but cannot be selected.
 

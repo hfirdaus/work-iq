@@ -30,23 +30,16 @@ and include IDs, versions, or definitions only for specifically requested apps.
 ## Channel files and attachments
 
 A file shared in a post appears in the message's `attachments` array with
-`contentType` `reference`, its `name`, and a SharePoint `contentUrl`. Always
-report each attachment's file name alongside the message. Pick the starting
-point from the request:
-
-- **A file shared in a post** ("the file Maya shared in General"): read the
-  channel messages and their attachments first.
-- **A file stored in a channel's Files** ("find the Q3 plan doc in the Work IQ
-  team"): fetch the channel `filesFolder`, keep `parentReference.driveId` and
-  the folder `id`, list its children, and match names exactly. Check the
-  team's other channels' folders when it is not in the first one. Folders can
-  be empty even when files were shared in posts, so if the file is in no
-  folder, read the channel messages' attachments.
+`contentType` `reference`, its `name`, and a SharePoint `contentUrl`. Channel
+files live in the channel's `filesFolder` and are linked from message
+attachments. Look in the folder first (fetch `filesFolder`, keep
+`parentReference.driveId` and the folder `id`, list its children, and match
+names exactly); if the file isn't there, check the channel messages'
+attachments.
 
 Do not use `/me/drive/root/search`, `/drives/{driveId}/root/search`, or
-`/search/query` for channel files, and do not follow unrelated mail, contact,
-or generic folder suggestions. Answer with each file's name, type (from its
-extension), and own `webUrl`, not only the folder link.
+`/search/query` for channel files. Report each file's name and its own
+`webUrl`, not only the folder link.
 
 When the user asks what a file contains, read it rather than describing it only
 as "an attachment":

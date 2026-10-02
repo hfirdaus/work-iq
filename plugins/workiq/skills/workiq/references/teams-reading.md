@@ -40,19 +40,6 @@ messages, threads, unread state, pins, and reactions.
   `user.user.id`/`displayName`; map IDs to names from the roster only when the
   display name is missing.
 
-## Creation time versus modification time
-
-Microsoft Graph documents `lastModifiedDateTime` filtering for
-[chat messages](https://learn.microsoft.com/en-us/graph/api/chat-list-messages?view=graph-rest-1.0)
-only together with `$orderby=lastModifiedDateTime desc` on the same request.
-That does not establish support on
-[channel messages](https://learn.microsoft.com/en-us/graph/api/channel-list-messages?view=graph-rest-1.0).
-
-`lastModifiedDateTime` is not a substitute for `createdDateTime`: edits can move
-older messages into a newer modification window. For messages sent during a
-date range, filter `createdDateTime` locally and report partial coverage unless
-the retrieved evidence establishes completeness.
-
 ## Bounded reads
 
 - For catch-up or cross-container reads, inspect at most the two

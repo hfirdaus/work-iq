@@ -26,19 +26,20 @@ Answer settings questions from the returned booleans
 | --- | --- | --- |
 | Every channel with membership type | `fetch` | `/teams/{teamId}/allChannels?$select=id,displayName,membershipType` |
 | Create a private channel | `create_entity` | parentUrl `/teams/{teamId}/channels`, `{"displayName":"{name}","membershipType":"private","members":[...]}` with a **member body** per person: the caller `["owner"]`, others `[]` |
-| Create a shared channel | `create_entity` | parentUrl `/teams/{teamId}/channels`, `{"displayName":"{name}","membershipType":"shared"}` |
+| Create a shared channel | `create_entity` | parentUrl `/teams/{teamId}/channels`, `{"displayName":"{name}","membershipType":"shared"}`, with at most one owner (the caller) in `members` |
 | Archive or unarchive a channel | `do_action` | `/teams/{teamId}/channels/{channelId}/archive` or `/unarchive` with `{}` |
 
-- **Private channel members can be dropped:** a delegated create can return 201
-  with only the caller in the roster. If the user asked for others, read the
-  new channel's `/members` once and add each missing person (see
-  `references/teams-members-presence.md`). Report the roster as read, not as
-  requested.
+- **Check the roster after creating a channel with members:** the create
+  response doesn't confirm the roster. If the user asked for other members,
+  read the new channel's `/members` once and add anyone missing (see
+  `references/teams-members-presence.md`).
 - **Shared channel create returns 202 with no ID:** fetch
   `/teams/{teamId}/channels?$select=id,displayName,membershipType` once (retry
-  at most once if it is not listed yet), take the exact new channel, then add
-  any extra owner. Report a policy block honestly; never substitute a standard
-  or private channel.
+  at most once if it is not listed yet) and take the exact new channel. Shared
+  channels can only be created with one owner; listing more returns 400. Add
+  each other owner or member with a separate `create_entity` on that channel's
+  `/members`. Report a policy block honestly; never substitute a standard or
+  private channel.
 - When a channel email address is requested, report the returned `email`; an
   empty value means no address is provisioned.
 

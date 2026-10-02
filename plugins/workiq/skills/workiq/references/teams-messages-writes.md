@@ -115,17 +115,3 @@ For mark-unread, after step 3 fetch
 `"lastMessageReadDateTime":"{returnedCreatedDateTime}"` beside `user`, using
 the first returned message's timestamp. The chat's `lastUpdatedDateTime` is
 not a message timestamp and is not a valid substitute.
-
-## Inspecting channel-message create properties
-
-This is the only Teams message task that uses `get_schema`. For "What
-properties can I set when creating a Teams channel message?", make exactly one
-`get_schema` call for `/teams/{teamId}/channels/{channelId}/messages` with
-`operationType="create"`. Do not probe chat or update schemas.
-
-Lead with user-supplied content fields such as `body`, `attachments`,
-`mentions`, and other fields the create payload supports. Do not present
-system-generated or read-only fields as settable (identifiers, timestamps,
-sender and location metadata, reactions, replies, hosted contents, message
-history). If the schema lacks reliable writability annotations, say so instead
-of claiming every exposed property can be set on create.
