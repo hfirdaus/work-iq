@@ -51,7 +51,9 @@ instead of creating a duplicate. Require a non-empty returned chat ID and
 
 **By topic (group chat).** In one `fetch`, request `/me?$select=id` and
 `/me/chats?$filter=topic%20eq%20%27{odataEscapedAndUrlEncodedExactTopic}%27&$expand=members&$top=50`,
-and require an exact `topic` match. If the response includes
+and require an exact `topic` match. Use the topic exactly as the user wrote it,
+with the same capitalization and spacing (the filter is case-sensitive); don't
+retry with other capitalizations. If the response includes
 `@odata.nextLink`, follow the global pagination guidance in
 `references/fetch-work-iq.md`. If no chat matches, do not fall back to `ask`;
 report the chat as not found.
@@ -69,7 +71,9 @@ Fetch the chat or channel messages and match the complete text exactly:
 - Chat: `/chats/{chatId}/messages?$select=id,createdDateTime,body`
 
 Add `from,subject` to `$select` when searching or summarizing so senders are
-visible. When attachments or reactions matter, drop `$select` (see **Query
+visible. To act on the user's own message ("my message"), confirm the sender
+by matching `from.user.id` to the signed-in user's id. Get that id by adding
+`/me?$select=id` to your first `fetch` batch; don't make a separate `/me` call. When attachments or reactions matter, drop `$select` (see **Query
 limits**). For file attachments, follow `references/teams-apps-files-content.md`.
 
 ## Resolve then act
@@ -96,6 +100,7 @@ tabs, or files) act only on the exact resolved ID; never on a similar name.
 | `.../members/{id}` on a team, channel, or chat | Membership `id` | That members collection |
 | `user@odata.bind`, tag `userId`, `mentioned.user.id`, `teamworkUserIdentity.id` | Directory user ID | `/me`, `/users/{UPN}`, or a member entry's `userId` |
 | `/users/{userId}/chats/.../softDelete` | The message sender's user ID | The message's `from.user.id` |
+| `/teams/{teamId}/channels/{channelId}/messages/{messageId}/softDelete` | No user ID; never add a `/users/{id}` prefix to channel routes (access denied) | The resolved team, channel, and message |
 | `.../tags/{tagId}/members/{id}` | Tag-member `id` | The tag's `/members` collection |
 | `.../pinnedMessages/{id}`, `.../tabs/{id}` | That entry's `id` | Its collection |
 | `teamworkUserIdentity.tenantId` | The same member's `tenantId` | The member entry |
@@ -137,8 +142,8 @@ this table conflicts with generic query guidance, this table wins.
 | `/teams/{teamId}/tags`, `/teams/{teamId}/tags/{tagId}/members` | Read the base collection | any query string |
 | `/me/chats` | `$expand=members` without nested projection; exact-topic `$filter` as in **Finding a chat** | `$orderby=lastUpdatedDateTime`; `$skip`; nested `$select` inside `$expand=members(...)` |
 | `/chats/{chatId}/messages` | Fetch the collection and filter or sort locally | `$top`; created-date filters |
-| `/teams/{teamId}/channels/{channelId}/messages` | Fetch one page and filter locally | `$top`; `$filter` (including `createdDateTime` ranges); `$orderby`; `$skiptoken` |
-| Any message collection or message when `attachments` or `reactions` are needed | Omit `$select` entirely | `attachments` or `reactions` in `$select` |
+| `/teams/{teamId}/channels/{channelId}/messages` | Fetch one page and filter locally | `$top`; `$filter` (including `createdDateTime` ranges); `$orderby`; `$skiptoken`; `replyToId` in `$select`; nested `$select` inside `$expand=replies(...)` |
+| Any message collection or message when `attachments`, `reactions`, `mentions`, or `importance` are needed | Omit `$select` entirely | `attachments`, `reactions`, `mentions`, or `importance` in `$select` |
 | `/chats/{chatId}/pinnedMessages` | `$expand=message` | `$select`, including nested `$select` in the expansion |
 | `/chats/{chatId}/tabs`, `/teams/{teamId}/channels/{channelId}/tabs` | `$expand=teamsApp` | `$top` |
 | `.../installedApps`, `/me/teamwork/installedApps`, `/users/{id}/teamwork/installedApps` | `$expand=teamsAppDefinition` | `$top` |

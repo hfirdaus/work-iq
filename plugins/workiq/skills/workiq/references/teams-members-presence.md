@@ -36,6 +36,9 @@ membership, team tags, and presence.
   report the limitation.
 - Tag payloads use directory user IDs only; omit `displayName`, `roles`, and
   `user@odata.bind` from them.
+- To find messages that @mention the user, fetch the messages without
+  `$select` (so `mentions` is returned) and match `mentions[].mentioned.user.id`
+  to the user's id from `/me`; do not put `mentions` or `replyToId` in `$select`.
 
 ## Presence
 

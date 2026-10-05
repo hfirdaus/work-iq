@@ -29,17 +29,29 @@ Answer settings questions from the returned booleans
 | Create a shared channel | `create_entity` | parentUrl `/teams/{teamId}/channels`, `{"displayName":"{name}","membershipType":"shared"}`, with at most one owner (the caller) in `members` |
 | Archive or unarchive a channel | `do_action` | `/teams/{teamId}/channels/{channelId}/archive` or `/unarchive` with `{}` |
 
-- **Check the roster after creating a channel with members:** the create
-  response doesn't confirm the roster. If the user asked for other members,
+- **Check the roster after creating a private channel with members:** the
+  create response doesn't confirm the roster. If the user asked for other members,
   read the new channel's `/members` once and add anyone missing (see
   `references/teams-members-presence.md`).
-- **Shared channel create returns 202 with no ID:** fetch
-  `/teams/{teamId}/channels?$select=id,displayName,membershipType` once (retry
-  at most once if it is not listed yet) and take the exact new channel. Shared
-  channels can only be created with one owner; listing more returns 400. Add
-  each other owner or member with a separate `create_entity` on that channel's
-  `/members`. Report a policy block honestly; never substitute a standard or
-  private channel.
+- **Create a shared channel and add people:** the create returns 202 with no
+  ID, and only the caller can be an owner in the create body (listing more
+  returns 400). Follow these steps:
+  1. `fetch` `/me/joinedTeams?$select=id,displayName` and take the exact team.
+  2. `create_entity` on `/teams/{teamId}/channels` with
+     `{"displayName":"{name}","membershipType":"shared"}`. Don't list the
+     team's channels first, and don't put other people in the body.
+  3. `fetch` `/teams/{teamId}/channels?$select=id,displayName,membershipType`
+     and take the exact new channel. If it isn't listed, fetch the list once
+     more. If it's still missing, say the create was accepted and is still
+     provisioning, and stop.
+  4. For each person to add, `create_entity` on
+     `/teams/{teamId}/channels/{channelId}/members` with a **member body**:
+     bind the UPN the user gave directly (`users('{upn}')`, no `/users`
+     lookup) and use `"roles":["owner"]` for an owner, `[]` for a member. Don't
+     read the roster before the add or after the 201.
+
+  Report a policy block honestly; never substitute a standard or private
+  channel.
 - When a channel email address is requested, report the returned `email`; an
   empty value means no address is provisioned.
 
