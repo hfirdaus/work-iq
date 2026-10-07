@@ -11,7 +11,7 @@ messages, threads, unread state, pins, and reactions.
 | List my chats | `fetch` | `/me/chats?$expand=members` (one call; answer from `topic`, `chatType`, and `members`) |
 | List members of a named group chat | `fetch` | `/me/chats?$filter=topic%20eq%20%27{odataEscapedAndUrlEncodedExactTopic}%27&$expand=members&$top=50` (answer from the expanded `members`; never `ask`) |
 | List messages in a chat | `fetch` | `/chats/{chatId}/messages` |
-| List my teams | `fetch` | `/me/joinedTeams?$select=id,displayName` |
+| List my teams | `fetch` | `/me/joinedTeams?$select=id,displayName` (`$select` only; never `$top`) |
 | List a team's channels | `fetch` | `/teams/{teamId}/channels?$select=id,displayName` |
 | Read channel details | `fetch` | `/teams/{teamId}/channels/{channelId}?$select=id,displayName,description,membershipType` |
 | List channel messages | `fetch` | `/teams/{teamId}/channels/{channelId}/messages` |

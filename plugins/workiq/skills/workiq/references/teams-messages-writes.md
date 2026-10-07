@@ -1,13 +1,15 @@
 # Teams messages and writes
 
 Use with `references/teams-routing.md` (lookups, IDs, write outcomes). This
-file covers sending, replies, mentions, reactions, reply-with-quote, edits,
-pins, removal, hiding chats, and read state.
+file covers creating and renaming chats, sending, replies, mentions, reactions,
+reply-with-quote, edits, pins, removal, hiding chats, and read state.
 
 ## Write paths
 
 | Operation | Tool | Path and body |
 | --- | --- | --- |
+| Create a group chat | `create_entity` | parentUrl `/chats` (see **Creating a group chat**) |
+| Rename a chat | `update_entity` | `/chats/{chatId}` with only `{"topic":"{newTopic}"}`; find the chat **by topic** first |
 | Send a chat message | `create_entity` | parentUrl `/chats/{chatId}/messages`, **message body** |
 | Send a message to yourself | `create_entity` | parentUrl `/chats/48:notes/messages`, **message body** (do not list chats, look up users, or create a chat first) |
 | Post a channel message | `create_entity` | parentUrl `/teams/{teamId}/channels/{channelId}/messages`, **message body** |
@@ -66,6 +68,15 @@ issue a separate `/me` or `/chats/{chatId}/members` fetch.
 Find the chat **by person** (it returns the existing 1:1 chat or creates it),
 then post to `/chats/{chatId}/messages`. Never create a group chat to deliver a
 single 1:1 message.
+
+## Creating a group chat
+
+1. In one `fetch`, request `/me?$select=id` and each named person, resolved as
+   in **Finding a chat — by person** step 1 in `references/teams-routing.md`.
+2. Call `create_entity` with `parentUrl="/chats"` and
+   `{"chatType":"group","topic":"{topic}","members":[...]}`, with a **member
+   body** (`"roles":["owner"]`) for the signed-in user and for each person.
+3. Report from the returned chat; do not make a verification fetch.
 
 ## Reading a channel thread
 

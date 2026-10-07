@@ -18,7 +18,7 @@ Query options for every Teams path follow **Query limits** below.
 ### Finding a channel
 
 1. Fetch `/me/joinedTeams?$select=id,displayName` and select the exact team
-   name.
+   name. `/me/joinedTeams` takes `$select` only; never add `$top`.
 2. Fetch `/teams/{teamId}/channels?$select=id,displayName` and select the exact
    channel name. Do not choose the first similar channel name.
 
@@ -67,7 +67,9 @@ fetch `/chats/{chatId}/members` once. Use that member's `userId` and
 
 Fetch the chat or channel messages and match the complete text exactly:
 
-- Channel: `/teams/{teamId}/channels/{channelId}/messages?$select=id,createdDateTime,body`
+- Channel: `/teams/{teamId}/channels/{channelId}/messages?$select=id,createdDateTime,body&$top=50`,
+  then match locally. Do not add `$filter`, `$search`, or `$orderby`, and do
+  not use `delta` to find a message.
 - Chat: `/chats/{chatId}/messages?$select=id,createdDateTime,body`
 
 Add `from,subject` to `$select` when searching or summarizing so senders are
@@ -134,15 +136,15 @@ this table conflicts with generic query guidance, this table wins.
 
 | Path | Supported approach | Do not send |
 | --- | --- | --- |
-| `/me/joinedTeams` | `$select=id,displayName` | `$top` |
+| `/me/joinedTeams` | `$select` only (`$select=id,displayName`) | `$top` |
 | `/teams/{teamId}/channels` | `$select=id,displayName` | `$top` |
 | `/teams/{teamId}/incomingChannels` | Fetch the base collection | `$select` |
 | `/teams/{teamId}/members`, `/teams/{teamId}/channels/{channelId}/members` | Read base `conversationMember` fields; when only owners are needed, filter with `roles/any(r:r eq 'owner')` | `$top`; `email`, `userId`, or `tenantId` in `$select` |
 | `/chats/{chatId}/members` | Fetch the unfiltered collection | any query string |
 | `/teams/{teamId}/tags`, `/teams/{teamId}/tags/{tagId}/members` | Read the base collection | any query string |
 | `/me/chats` | `$expand=members` without nested projection; exact-topic `$filter` as in **Finding a chat** | `$orderby=lastUpdatedDateTime`; `$skip`; nested `$select` inside `$expand=members(...)` |
-| `/chats/{chatId}/messages` | Fetch the collection and filter or sort locally | `$top`; created-date filters |
-| `/teams/{teamId}/channels/{channelId}/messages` | Fetch one page and filter locally | `$top`; `$filter` (including `createdDateTime` ranges); `$orderby`; `$skiptoken`; `replyToId` in `$select`; nested `$select` inside `$expand=replies(...)` |
+| `/chats/{chatId}/messages` | Fetch the collection and filter or sort locally | `$top`; created-date filters; `$search` |
+| `/teams/{teamId}/channels/{channelId}/messages` | `$top=50`, then filter locally | `$filter` (including `createdDateTime` ranges); `$orderby`; `$search`; `$skiptoken`; `replyToId` in `$select`; nested `$select` inside `$expand=replies(...)` |
 | Any message collection or message when `attachments`, `reactions`, `mentions`, or `importance` are needed | Omit `$select` entirely | `attachments`, `reactions`, `mentions`, or `importance` in `$select` |
 | `/chats/{chatId}/pinnedMessages` | `$expand=message` | `$select`, including nested `$select` in the expansion |
 | `/chats/{chatId}/tabs`, `/teams/{teamId}/channels/{channelId}/tabs` | `$expand=teamsApp` | `$top` |

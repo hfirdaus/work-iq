@@ -25,6 +25,7 @@ Answer settings questions from the returned booleans
 | Operation | Tool | Path and body |
 | --- | --- | --- |
 | Every channel with membership type | `fetch` | `/teams/{teamId}/allChannels?$select=id,displayName,membershipType` |
+| Update a channel's description or name | `update_entity` | `/teams/{teamId}/channels/{channelId}` with only the changed field, such as `{"description":"{text}"}` or `{"displayName":"{name}"}` (private channels you belong to are listed by **Finding a channel**) |
 | Create a private channel | `create_entity` | parentUrl `/teams/{teamId}/channels`, `{"displayName":"{name}","membershipType":"private","members":[...]}` with a **member body** per person: the caller `["owner"]`, others `[]` |
 | Create a shared channel | `create_entity` | parentUrl `/teams/{teamId}/channels`, `{"displayName":"{name}","membershipType":"shared"}`, with at most one owner (the caller) in `members` |
 | Archive or unarchive a channel | `do_action` | `/teams/{teamId}/channels/{channelId}/archive` or `/unarchive` with `{}` |
@@ -36,7 +37,8 @@ Answer settings questions from the returned booleans
 - **Create a shared channel and add people:** the create returns 202 with no
   ID, and only the caller can be an owner in the create body (listing more
   returns 400). Follow these steps:
-  1. `fetch` `/me/joinedTeams?$select=id,displayName` and take the exact team.
+  1. `fetch` `/me/joinedTeams?$select=id,displayName` (`$select` only; never
+     `$top`) and take the exact team.
   2. `create_entity` on `/teams/{teamId}/channels` with
      `{"displayName":"{name}","membershipType":"shared"}`. Don't list the
      team's channels first, and don't put other people in the body.
@@ -57,7 +59,9 @@ Answer settings questions from the returned booleans
 
 ## Inventory across teams
 
-- **Channels and owners across my teams:** fetch `/me/joinedTeams` once, then
+- **Channels and owners across my teams:** fetch
+  `/me/joinedTeams?$select=id,displayName` once (`$select` only; never
+  `$top`), then
   batch each team's `/teams/{teamId}/allChannels` (plus
   `/teams/{teamId}/installedApps?$expand=teamsAppDefinition` when apps are
   asked for) in one `fetch`. Standard channels inherit team owners: read
@@ -65,7 +69,8 @@ Answer settings questions from the returned booleans
   and read channel members only for private or shared channels. Report a team
   that returns 403 or another 4xx as inaccessible and continue.
 - **Every team I can reach, including through shared channels:** fetch
-  `/me?$select=id` with `/me/joinedTeams?$select=id,displayName`, then
+  `/me?$select=id` with `/me/joinedTeams?$select=id,displayName` (`$select`
+  only; never `$top`), then
   `/users/{id}/teamwork/associatedTeams` (the `/me/teamwork/...` form is
   denied). Teams in `associatedTeams` but not `joinedTeams` are
   shared-channel-only access.
