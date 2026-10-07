@@ -14,11 +14,14 @@ substitute a separate endpoint, another MCP server, or an invented REST URL.
    default environment. Do not guess an environment ID.
 3. Use `search_paths` with a natural-language description of the business task when broader semantic discovery is
    useful. For Business Applications, prefer a natural language `query` for path discovery. Returned paths can be
-   passed directly to `fetch`, `get_schema`, or a write tool.
-5. Discover **every** Business Applications resource this way — environments, apps, tables, records, skills, APIs,
+  passed directly to `fetch`, `get_schema`, or a write tool. Choose the smallest sufficient set from the returned
+  descriptions; when two or more are needed, read them in one `fetch` through `entityUrls`, not one call per path.
+  Retain successful per-entry results and retry only required failures.
+4. Discover **every** Business Applications resource this way — environments, apps, tables, records, skills, APIs,
    and operations. Take each identifier from the returned paths. Do not guess an ID or name, and do not assume a
    default environment.
-6. Use `get_schema` on the returned concrete path before an unfamiliar mutation or operation. Never fill in
+5. Fetch a concrete table to read its columns; do not repeat that read with `get_schema`. Use `get_schema` before an
+    unfamiliar mutation or operation whose input contract was not returned. Never fill in
    `{environmentId}`, `{tableName}`, `{recordId}`, `{appName}`, `{apiName}`, `{skillName}`, or operation names
    from memory.
 
@@ -27,7 +30,7 @@ substitute a separate endpoint, another MCP server, or an invented REST URL.
 | Intent | WorkIQ tool and Business Applications path |
 |---|---|
 | List environments/default | `fetch` `/businessapps/environments/` |
-| List or describe tables | `fetch` or `get_schema` `/businessapps/environments/{environmentId}/tables[/<tableName>]` |
+| List or describe tables | `fetch` `/businessapps/environments/{environmentId}/tables[/<tableName>]` (batch known paths with `entityUrls`) |
 | Read a record | `fetch` `/businessapps/environments/{environmentId}/tables/{tableName}/records/{recordId}` |
 | Query environment data | `do_action` `/businessapps/environments/{environmentId}/query` with `jsonBody: {"querytext":"SELECT ..."}` |
 | Create a table | `create_entity` on `/businessapps/environments/{environmentId}/tables` with `{tableName, columns, displayName?, description?}` |
@@ -48,7 +51,12 @@ substitute a separate endpoint, another MCP server, or an invented REST URL.
 
 Environment SQL queries and Custom APIs with input bodies are actions, not functions. Use `do_action` with the
 schema-defined `jsonBody`. Use `call_function` only for an exact function path returned by discovery; do not use it
-for `/businessapps/environments/{environmentId}/query`.
+for `/businessapps/environments/{environmentId}/query`. Pass SQL in `querytext`, never natural language. Use explicit
+schema-confirmed columns, selective `WHERE`, and `TOP` or paging. Inspect the query schema once when its contract was
+not returned, and use only its advertised SQL subset; do not improvise subqueries, `CASE`, or `APPLY`. Join confirmed
+keys within one environment when useful; across environments, run bounded queries and correlate locally by stable
+business keys, not names or assumed shared IDs. Use keys returned by the first query to filter later queries; do not
+scan entire secondary tables.
 
 Business Applications record file operations are distinct from Microsoft Graph binary content and the
 `fetch_blob` / `upload_blob` release status. Do not substitute those Graph blob tools for the
@@ -141,8 +149,8 @@ App-scoped paths intentionally differ from environment table paths:
 ## Grounding rules
 
 - WorkIQ's top-level `ask` can also answer questions about Business Applications requests, though some applications may not be included in `ask`, so use `/businessapps/me` or `search_paths` for authoritative path discovery.
-- Do not invent `/businessapps` REST shapes, append OData syntax to an undiscovered Business Applications path, or
-  move `/records/` into an app-scoped path.
+- Do not invent `/businessapps` REST shapes, append OData syntax to an undiscovered Business Applications path, move
+  `/records/` into an app-scoped path, or retry a confirmed unsupported path through different tools.
 - Preserve exact casing and IDs returned by tools in subsequent calls, although structural path segments are
   case-insensitive.
 - A write is complete only when the tool response confirms it. For a multi-turn delegated workflow, preserve and
